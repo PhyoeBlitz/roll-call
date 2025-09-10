@@ -1,18 +1,42 @@
 import React, { useEffect, useState } from 'react'
-import { loadAttendees } from '../utils/storage'
+import { loadAttendees, subscribeAttendees } from '../utils/storage'
 
 export default function Public() {
     const [attendees, setAttendees] = useState(null)
 
-    useEffect(() => {
-        let mounted = true
-            ; (async () => {
-                const items = await loadAttendees()
-                if (!mounted) return
-                setAttendees(items)
-            })()
-        return () => { mounted = false }
-    }, [])
+            useEffect(() => {
+                let mounted = true
+
+                // initial load (fallback if ws is slow)
+                ;(async () => {
+                    try {
+                        const items = await loadAttendees()
+                        if (mounted) setAttendees(items)
+                    } catch {}
+                })()
+
+                // live updates via WebSocket
+                const unsub = subscribeAttendees(items => {
+                    if (mounted) setAttendees(items)
+                })
+
+                // also react to localStorage changes (same-device edits)
+                const onStorage = (e: StorageEvent) => {
+                    if (e.key === 'rollcall.attendees') {
+                        try {
+                            const raw = e.newValue
+                            if (raw) setAttendees(JSON.parse(raw))
+                        } catch {}
+                    }
+                }
+                window.addEventListener('storage', onStorage)
+
+                return () => {
+                    mounted = false
+                    unsub()
+                    window.removeEventListener('storage', onStorage)
+                }
+            }, [])
 
     if (!attendees) return <div className="p-4"><h2 className="text-lg font-semibold">Public</h2><p>Loading...</p></div>
 
