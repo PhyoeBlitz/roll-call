@@ -38,7 +38,7 @@ export default function Public() {
                 }
             }, [])
 
-    if (!attendees) return <div className="p-4"><h2 className="text-lg font-semibold">Public</h2><p>Loading...</p></div>
+    if (!attendees) return <div className="p-4"><h2 className="text-lg font-semibold">出席状況</h2><p>読み込み中...</p></div>
 
     const total = attendees.length
     const attending = attendees.filter(a => a.attending).length
@@ -61,38 +61,38 @@ export default function Public() {
     return (
         <div className="space-y-6">
             <div className="text-center">
-                <p className="text-gray-600">Real-time attendance overview</p>
+                <p className="text-gray-600">リアルタイム出席状況</p>
             </div>
 
             <div className="text-sm text-gray-900 space-y-1">
                 <div>
-                    <span className="text-gray-600">Total</span> = <span className="font-semibold">{total}</span>
+                    <span className="text-gray-600">総数</span> = <span className="font-semibold">{total}</span>
                 </div>
                 <div>
-                    <span className="text-gray-600">Attending</span> = <span className="font-semibold text-green-700">{attending}</span>
+                    <span className="text-gray-600">出席</span> = <span className="font-semibold text-green-700">{attending}</span>
                 </div>
                 <div>
-                    <span className="text-gray-600">Not attending</span> = <span className="font-semibold text-red-700">{not}</span>
+                    <span className="text-gray-600">欠席</span> = <span className="font-semibold text-red-700">{not}</span>
                 </div>
                 <div>
-                    <span className="text-gray-600">Late</span> = <span className="font-semibold text-yellow-700">{late}</span>
+                    <span className="text-gray-600">遅刻</span> = <span className="font-semibold text-yellow-700">{late}</span>
                 </div>
             </div>
 
             {/* <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900">Attendance List</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">出席者一覧</h3>
                 </div>
                 <div className="overflow-auto max-h-96">
                     <table className="min-w-full">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee ID</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kana</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">社員番号</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">氏名</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">読み仮名</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">所属部署</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">国籍</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">出欠状況</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
@@ -128,11 +128,11 @@ export default function Public() {
                                     <td className="px-4 py-3">
                                         {a.attending ? (
                                             <span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
-                                                ✅ Present
+                                                ✅ 出席
                                             </span>
                                         ) : (
                                             <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded">
-                                                ❌ Not attending
+                                                ❌ 欠席
                                             </span>
                                         )}
                                     </td>

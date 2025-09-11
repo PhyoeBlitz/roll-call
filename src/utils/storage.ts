@@ -27,17 +27,22 @@ function getWebSocket(): Promise<WebSocket> {
     
     wsConnection.onopen = () => {
       wsReady = true
+      console.log('WebSocket connected')
       resolve(wsConnection!)
     }
     
-    wsConnection.onerror = () => {
+    wsConnection.onerror = (error) => {
       wsReady = false
+      console.error('WebSocket connection error:', error)
       reject(new Error('WebSocket connection failed'))
     }
     
-    wsConnection.onclose = () => {
+    wsConnection.onclose = (event) => {
       wsReady = false
       wsConnection = null
+      if (event.code !== 1000) {
+        console.warn(`WebSocket closed unexpectedly: ${event.code} ${event.reason}`)
+      }
     }
   })
 }

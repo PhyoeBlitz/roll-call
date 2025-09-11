@@ -21,7 +21,7 @@ export default function App() {
                 }`
               }
             >
-              Public
+              出席状況
             </NavLink>
             <NavLink 
               to="/admin" 
@@ -33,7 +33,7 @@ export default function App() {
                 }`
               }
             >
-              Admin
+              管理画面
             </NavLink>
           </nav>
         </header> */}

@@ -57,7 +57,7 @@ export default function Admin() {
     let eid = employeeId.trim() || `GEN-${Date.now()}`
     // ensure uniqueness
     if (attendees.some(a => a.employeeId === eid)) {
-      window.alert('Employee ID already exists — choose a different 社員番号 or edit the existing record.')
+      window.alert('社員番号が既に存在します — 別の社員番号を選択するか、既存のレコードを編集してください。')
       return
     }
     const item = {
@@ -91,70 +91,70 @@ export default function Admin() {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h2>
-        <p className="text-gray-600">Manage attendees and track participation</p>
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">管理画面</h2>
+        <p className="text-gray-600">出席者管理と参加状況追跡</p>
       </div>
 
       {/* simple stats summary */}
       <div className="text-sm text-gray-900 space-y-1">
         <div>
-          <span className="text-gray-600">Total</span> = <span className="font-semibold">{total}</span>
+          <span className="text-gray-600">総数</span> = <span className="font-semibold">{total}</span>
         </div>
         <div>
-          <span className="text-gray-600">Attending</span> = <span className="font-semibold text-green-700">{attendingCount}</span>
+          <span className="text-gray-600">出席</span> = <span className="font-semibold text-green-700">{attendingCount}</span>
         </div>
         <div>
-          <span className="text-gray-600">Not attending</span> = <span className="font-semibold text-red-700">{notCount}</span>
+          <span className="text-gray-600">欠席</span> = <span className="font-semibold text-red-700">{notCount}</span>
         </div>
         <div>
-          <span className="text-gray-600">Late</span> = <span className="font-semibold text-yellow-700">{lateCount}</span>
+          <span className="text-gray-600">遅刻</span> = <span className="font-semibold text-yellow-700">{lateCount}</span>
         </div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow-sm border">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Add New Attendee</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">新規出席者追加</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <input 
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
             value={employeeId} 
             onChange={e => setEmployeeId(e.target.value)} 
-            placeholder="Employee ID" 
+            placeholder="社員番号" 
           />
           <input 
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
             value={name} 
             onChange={e => setName(e.target.value)} 
-            placeholder="Full Name" 
+            placeholder="氏名" 
           />
           <input 
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
             value={kana} 
             onChange={e => setKana(e.target.value)} 
-            placeholder="Kana Reading" 
+            placeholder="読み仮名" 
           />
           <input 
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
             value={group} 
             onChange={e => setGroup(e.target.value)} 
-            placeholder="Department" 
+            placeholder="所属部署" 
           />
           <input 
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
             value={nationality} 
             onChange={e => setNationality(e.target.value)} 
-            placeholder="Nationality" 
+            placeholder="国籍" 
           />
           <button 
             className="px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-colors" 
             onClick={add}
           >
-            Add Person
+            人員追加
           </button>
         </div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow-sm border">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Export Data</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">データエクスポート</h3>
         <div className="flex flex-wrap gap-3">
           <button className="px-4 py-2 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 transition-colors" onClick={async () => {
           const wb = new ExcelJS.Workbook()
@@ -165,7 +165,8 @@ export default function Admin() {
             { header: '読み仮名', key: 'kana', width: 20 },
             { header: '所属グループ', key: 'group', width: 20 },
             { header: '国籍', key: 'nationality', width: 12 },
-            { header: '出欠', key: 'attending', width: 10 }
+            { header: '出欠', key: 'attending', width: 10 },
+            { header: 'チェック時刻', key: 'checkedAt', width: 20 }
           ]
 
           // header styling: light green fill and border
@@ -181,14 +182,65 @@ export default function Admin() {
           })
 
           attendees.forEach(a => {
+            const checkedAtFormatted = a.checkedAt 
+              ? new Date(a.checkedAt).toLocaleString('ja-JP', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit'
+                })
+              : ''
+            
             sheet.addRow({
               employeeId: a.employeeId || '',
               name: a.name,
               kana: a.kana || '',
               group: a.group || '',
               nationality: a.nationality || '',
-              attending: a.attending ? '出席' : '欠席'
+              attending: a.attending ? '出席' : '欠席',
+              checkedAt: checkedAtFormatted
             })
+          })
+
+          // Add summary rows
+          const attendingCount = attendees.filter(a => a.attending).length
+          const notAttendingCount = attendees.filter(a => !a.attending).length
+          
+          // Empty row for spacing
+          sheet.addRow({})
+          
+          // Summary rows
+          const totalAttendingRow = sheet.addRow({
+            employeeId: '',
+            name: '合計出席者',
+            kana: '',
+            group: '',
+            nationality: '',
+            attending: attendingCount.toString(),
+            checkedAt: ''
+          })
+          
+          const totalNotAttendingRow = sheet.addRow({
+            employeeId: '',
+            name: '合計欠席者',
+            kana: '',
+            group: '',
+            nationality: '',
+            attending: notAttendingCount.toString(),
+            checkedAt: ''
+          })
+
+          // Style summary rows
+          totalAttendingRow.eachCell((cell) => {
+            cell.font = { bold: true }
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6F3E6' } }
+          })
+          
+          totalNotAttendingRow.eachCell((cell) => {
+            cell.font = { bold: true }
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE6E6' } }
           })
 
           const buf = await wb.xlsx.writeBuffer()
@@ -202,17 +254,17 @@ export default function Admin() {
           a.remove()
           URL.revokeObjectURL(url)
         }}>
-          Export Excel
+          Excelエクスポート
         </button>
         </div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow-sm border">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Search & Filter</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">検索・フィルター</h3>
         <div className="flex items-center gap-3">
           <input
             className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Search by name, ID, group, or nationality..."
+            placeholder="氏名、ID、部署、国籍で検索..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -220,14 +272,14 @@ export default function Admin() {
             className="px-4 py-2 rounded-md font-medium transition-colors border border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
             onClick={() => setSearch('')}
           >
-            Clear
+            クリア
           </button>
         </div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow-sm border">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">File Upload</h3>
-        <label className="block mb-3 text-sm text-gray-600">Upload Excel file with columns: Employee ID, Name, Kana, Group, Nationality</label>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">ファイルアップロード</h3>
+        <label className="block mb-3 text-sm text-gray-600">社員番号、氏名、読み仮名、部署、国籍の列を含むExcelファイルをアップロード</label>
         <input 
           className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" 
           type="file" 
@@ -271,39 +323,40 @@ export default function Admin() {
           }
 
           if (toAdd.length === 0) {
-            window.alert(`No new rows were added. ${skipped ? `${skipped} duplicate(s) were skipped.` : ''}`)
+            window.alert(`新しい行は追加されませんでした。${skipped ? `${skipped}件の重複がスキップされました。` : ''}`)
             return
           }
 
           await persist([...attendees, ...toAdd])
-          if (skipped) window.alert(`${toAdd.length} rows added, ${skipped} duplicate(s) skipped.`)
+          if (skipped) window.alert(`${toAdd.length}行が追加され、${skipped}件の重複がスキップされました。`)
         }} />
       </div>
 
       <div className="flex items-center justify-between mb-2">
         <div className="text-sm text-gray-600 bg-white px-4 py-2 rounded-lg shadow-sm">
-          Showing <span className="font-semibold text-indigo-600">{filteredAttendees.length}</span> of <span className="font-semibold">{attendees.length}</span> attendees
+          <span className="font-semibold">{attendees.length}</span>名中<span className="font-semibold text-indigo-600">{filteredAttendees.length}</span>名を表示
         </div>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
         {filteredAttendees.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-xl font-semibold text-gray-600 mb-2">No attendees found</div>
-            <div className="text-gray-500">Try adjusting your search or add some attendees</div>
+            <div className="text-xl font-semibold text-gray-600 mb-2">出席者が見つかりません</div>
+            <div className="text-gray-500">検索条件を調整するか、出席者を追加してください</div>
           </div>
         ) : (
           <div className="overflow-auto">
             <table className="min-w-full">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kana</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">社員番号</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">氏名</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">読み仮名</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">所属部署</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">国籍</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">出欠状況</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">チェック時刻</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -324,10 +377,18 @@ export default function Admin() {
                     </td>
                     <td className="px-4 py-3">
                       {a.attending ? (
-                        <span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">✅ Attending</span>
+                        <span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">✅ 出席</span>
                       ) : (
-                        <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded">❌ Not attending</span>
+                        <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded">❌ 欠席</span>
                       )}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {a.checkedAt ? (
+                        <div>
+                          <div>{new Date(a.checkedAt).toLocaleDateString()}</div>
+                          <div className="text-xs text-gray-500">{new Date(a.checkedAt).toLocaleTimeString()}</div>
+                        </div>
+                      ) : '—'}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-2">
@@ -339,13 +400,13 @@ export default function Admin() {
                           }`}
                           onClick={() => toggle(a.employeeId)}
                         >
-                          {a.attending ? '❌ Mark not attending' : '✅ Mark attending'}
+                          {a.attending ? '❌ 欠席にする' : '✅ 出席にする'}
                         </button>
                         <button
                           className="inline-flex items-center justify-center px-4 py-2 rounded-md border border-red-300 text-red-700 hover:bg-red-50 text-sm font-medium transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                           onClick={() => remove(a.employeeId)}
                         >
-                          Remove
+                          削除
                         </button>
                       </div>
                     </td>
