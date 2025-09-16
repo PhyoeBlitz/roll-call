@@ -200,7 +200,7 @@ wss.on('connection', (ws, request) => {
 require('dotenv').config()
 
 const port = process.env.PORT || 4000
-server.listen(port, () => {
+server.listen(port, '0.0.0.0', () => {
   console.log(`🚀 Roll-call WebSocket server listening on port ${port}`)
   console.log(`🔒 Security features enabled: rate limiting, message validation`)
 })

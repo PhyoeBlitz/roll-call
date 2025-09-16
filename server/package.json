@@ -1,0 +1,13 @@
+{
+  "name": "roll-call-server",
+  "version": "1.0.0",
+  "main": "index.cjs",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.cjs"
+  },
+  "dependencies": {
+    "ws": "^8.13.0",
+    "dotenv": "^16.4.5"
+  }
+}
