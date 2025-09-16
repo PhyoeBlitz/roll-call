@@ -2,6 +2,30 @@ import CryptoJS from "crypto-js";
 
 const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
 
+function minifyAttendees(items: Attendee[]): any[] {
+  return items.map(a => ({
+    i: a.employeeId,
+    n: a.name,
+    k: a.kana,
+    g: a.group,
+    c: a.nationality,
+    a: a.attending,
+    t: a.checkedAt
+  }));
+}
+
+function restoreAttendees(minified: any[]): Attendee[] {
+  return minified.map(m => ({
+    employeeId: m.i,
+    name: m.n,
+    kana: m.k,
+    group: m.g,
+    nationality: m.c,
+    attending: m.a,
+    checkedAt: m.t
+  }));
+}
+
 function encryptData(data: any): string {
   return CryptoJS.AES.encrypt(JSON.stringify(data), SECRET_KEY).toString();
 }
@@ -71,7 +95,7 @@ export async function loadAttendees(): Promise<Attendee[]> {
           const msg = JSON.parse(event.data)
           if (msg.type === 'attendees' && typeof msg.data === 'string') {
             ws.removeEventListener('message', handleMessage)
-            resolve(decryptData(msg.data) as Attendee[])
+            resolve(restoreAttendees(decryptData(msg.data)))
           }
         } catch {}
       }
@@ -87,7 +111,7 @@ export async function loadAttendees(): Promise<Attendee[]> {
           ws.removeEventListener('message', handleMessage)
           try {
             const raw = localStorage.getItem(KEY)
-            resolve(raw ? JSON.parse(raw) as Attendee[] : [])
+            resolve(raw ? restoreAttendees(decryptData(raw)) : [])
           } catch {
             resolve([])
           }
@@ -100,7 +124,7 @@ export async function loadAttendees(): Promise<Attendee[]> {
         // Fallback to localStorage
         try {
           const raw = localStorage.getItem(KEY)
-          resolve(raw ? JSON.parse(raw) as Attendee[] : [])
+          resolve(raw ? restoreAttendees(decryptData(raw)) : [])
         } catch {
           resolve([])
         }
@@ -120,14 +144,14 @@ export async function loadAttendees(): Promise<Attendee[]> {
 export async function saveAttendees(items: Attendee[]) {
   // Always update localStorage first
   try {
-    localStorage.setItem(KEY, encryptData(items))
+    localStorage.setItem(KEY, encryptData(minifyAttendees(items)))
   } catch {}
 
   // Send to server via WebSocket
   try {
     const ws = await getWebSocket()
     if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'save', data: encryptData(items) }))
+      ws.send(JSON.stringify({ type: 'save', data: encryptData(minifyAttendees(items)) }))
     }
   } catch {
     // ignore WebSocket errors - localStorage is the fallback
@@ -149,7 +173,7 @@ export function subscribeAttendees(onMessage: (items: Attendee[]) => void): Unsu
         try {
           const msg = JSON.parse(ev.data as string)
           if (msg && msg.type === 'attendees' && typeof msg.data === 'string') {
-            onMessage(decryptData(msg.data) as Attendee[])
+            onMessage(restoreAttendees(decryptData(msg.data)))
           }
         } catch {}
       }
