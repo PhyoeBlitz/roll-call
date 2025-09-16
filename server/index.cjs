@@ -87,11 +87,6 @@ function isValidMessage(msg) {
         return false
       }
       
-      if (msg.data.length > 10000) {
-        console.log('無効な保存メッセージ: 出席者が多すぎます', msg.data.length)
-        return false
-      }
-      
       return true
     }
     
