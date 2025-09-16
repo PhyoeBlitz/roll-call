@@ -62,19 +62,19 @@ function getWebSocket(): Promise<WebSocket> {
 
     const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:4000/rollcall-ws'
     wsConnection = new WebSocket(wsUrl)
-    
+
     wsConnection.onopen = () => {
       wsReady = true
       console.log('WebSocket connected')
       resolve(wsConnection!)
     }
-    
+
     wsConnection.onerror = (error) => {
       wsReady = false
       console.error('WebSocket connection error:', error)
       reject(new Error('WebSocket connection failed'))
     }
-    
+
     wsConnection.onclose = (event) => {
       wsReady = false
       wsConnection = null
@@ -88,7 +88,6 @@ function getWebSocket(): Promise<WebSocket> {
 export async function loadAttendees(): Promise<Attendee[]> {
   try {
     const ws = await getWebSocket()
-    
     return new Promise((resolve) => {
       const handleMessage = (event: MessageEvent) => {
         try {
@@ -97,55 +96,28 @@ export async function loadAttendees(): Promise<Attendee[]> {
             ws.removeEventListener('message', handleMessage)
             resolve(restoreAttendees(decryptData(msg.data)))
           }
-        } catch {}
+        } catch { }
       }
-      
       ws.addEventListener('message', handleMessage)
-      
-      // Wait a bit more to ensure connection is fully ready
       setTimeout(() => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'load' }))
         } else {
-          // Connection not ready, use fallback
           ws.removeEventListener('message', handleMessage)
-          try {
-            const raw = localStorage.getItem(KEY)
-            resolve(raw ? restoreAttendees(decryptData(raw)) : [])
-          } catch {
-            resolve([])
-          }
-        }
-      }, 100)
-      
-      // Timeout fallback
-      setTimeout(() => {
-        ws.removeEventListener('message', handleMessage)
-        // Fallback to localStorage
-        try {
-          const raw = localStorage.getItem(KEY)
-          resolve(raw ? restoreAttendees(decryptData(raw)) : [])
-        } catch {
           resolve([])
         }
+      }, 100)
+      setTimeout(() => {
+        ws.removeEventListener('message', handleMessage)
+        resolve([])
       }, 5000)
     })
   } catch {
-    // Fallback to localStorage
-    try {
-      const raw = localStorage.getItem(KEY)
-      return raw ? JSON.parse(raw) as Attendee[] : []
-    } catch {
-      return []
-    }
+    return []
   }
 }
 
 export async function saveAttendees(items: Attendee[]) {
-  // Always update localStorage first
-  try {
-    localStorage.setItem(KEY, encryptData(minifyAttendees(items)))
-  } catch {}
 
   // Send to server via WebSocket
   try {
@@ -175,7 +147,7 @@ export function subscribeAttendees(onMessage: (items: Attendee[]) => void): Unsu
           if (msg && msg.type === 'attendees' && typeof msg.data === 'string') {
             onMessage(restoreAttendees(decryptData(msg.data)))
           }
-        } catch {}
+        } catch { }
       }
       ws.onclose = () => {
         if (!closed) {
@@ -184,7 +156,7 @@ export function subscribeAttendees(onMessage: (items: Attendee[]) => void): Unsu
         }
       }
       ws.onerror = () => {
-        try { ws && ws.close() } catch {}
+        try { ws && ws.close() } catch { }
       }
     } catch {
       // schedule retry if constructor throws
@@ -200,6 +172,6 @@ export function subscribeAttendees(onMessage: (items: Attendee[]) => void): Unsu
       window.clearTimeout(retryTimer)
       retryTimer = null
     }
-    try { ws && ws.close() } catch {}
+    try { ws && ws.close() } catch { }
   }
 }
