@@ -1,3 +1,17 @@
+import CryptoJS from "crypto-js";
+
+const SECRET_KEY = import.meta.env.VITE_SECRET_KEY;
+
+function encryptData(data: any): string {
+  return CryptoJS.AES.encrypt(JSON.stringify(data), SECRET_KEY).toString();
+}
+
+function decryptData(ciphertext: string): any {
+  const bytes = CryptoJS.AES.decrypt(ciphertext, SECRET_KEY);
+  const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+  return JSON.parse(decrypted);
+}
+
 const KEY = 'rollcall.attendees'
 
 export type Attendee = {
@@ -55,9 +69,9 @@ export async function loadAttendees(): Promise<Attendee[]> {
       const handleMessage = (event: MessageEvent) => {
         try {
           const msg = JSON.parse(event.data)
-          if (msg.type === 'attendees' && Array.isArray(msg.data)) {
+          if (msg.type === 'attendees' && typeof msg.data === 'string') {
             ws.removeEventListener('message', handleMessage)
-            resolve(msg.data as Attendee[])
+            resolve(decryptData(msg.data) as Attendee[])
           }
         } catch {}
       }
@@ -106,14 +120,14 @@ export async function loadAttendees(): Promise<Attendee[]> {
 export async function saveAttendees(items: Attendee[]) {
   // Always update localStorage first
   try {
-    localStorage.setItem(KEY, JSON.stringify(items))
+    localStorage.setItem(KEY, encryptData(items))
   } catch {}
 
   // Send to server via WebSocket
   try {
     const ws = await getWebSocket()
     if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: 'save', data: items }))
+      ws.send(JSON.stringify({ type: 'save', data: encryptData(items) }))
     }
   } catch {
     // ignore WebSocket errors - localStorage is the fallback
@@ -134,8 +148,8 @@ export function subscribeAttendees(onMessage: (items: Attendee[]) => void): Unsu
       ws.onmessage = (ev) => {
         try {
           const msg = JSON.parse(ev.data as string)
-          if (msg && msg.type === 'attendees' && Array.isArray(msg.data)) {
-            onMessage(msg.data as Attendee[])
+          if (msg && msg.type === 'attendees' && typeof msg.data === 'string') {
+            onMessage(decryptData(msg.data) as Attendee[])
           }
         } catch {}
       }

@@ -16,7 +16,7 @@ function readData() {
     const raw = fs.readFileSync(DATA_FILE, 'utf8')
     return JSON.parse(raw)
   } catch {
-    return { attendees: [] }
+    return { attendees: '' }
   }
 }
 
@@ -82,22 +82,14 @@ function isValidMessage(msg) {
     }
     
     if (msg.type === 'save') {
-      if (!Array.isArray(msg.data)) {
-        console.log('無効な保存メッセージ: データが配列ではありません')
+      if (typeof msg.data !== 'string') {
+        console.log('無効な保存メッセージ: データが暗号化文字列ではありません')
         return false
       }
       
-      if (msg.data.length > 1000) {
+      if (msg.data.length > 10000) {
         console.log('無効な保存メッセージ: 出席者が多すぎます', msg.data.length)
         return false
-      }
-      
-      // Check each attendee
-      for (let i = 0; i < msg.data.length; i++) {
-        if (!isValidAttendee(msg.data[i])) {
-          console.log('無効な出席者データ インデックス', i, msg.data[i])
-          return false
-        }
       }
       
       return true
@@ -178,7 +170,7 @@ wss.on('connection', (ws, request) => {
       if (msg.type === 'load') {
         // send current data to requesting client
         const data = readData()
-        ws.send(JSON.stringify({ type: 'attendees', data: data.attendees || [] }))
+        ws.send(JSON.stringify({ type: 'attendees', data: data.attendees || '' }))
         console.log(`クライアントにデータを送信: ${clientId}`)
       }
     } catch (err) {
