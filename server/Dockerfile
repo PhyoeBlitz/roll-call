@@ -1,12 +1,14 @@
-# Use Node.js LTS image
-FROM node:20
+FROM node:20-bullseye-slim
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install --production
+RUN npm ci --production
 
 COPY . .
+
+RUN useradd --user-group --create-home --shell /bin/false appuser
+USER appuser
 
 EXPOSE 4001
 
