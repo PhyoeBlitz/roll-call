@@ -16,7 +16,7 @@ function readData() {
     const raw = fs.readFileSync(DATA_FILE, 'utf8')
     return JSON.parse(raw)
   } catch {
-    return { attendees: '' }
+    return { attendees: '', publicSettings: { showList: true, publicColumns: { employeeId: true, name: true, kana: true, group: true, nationality: true, attending: true } } }
   }
 }
 
@@ -76,21 +76,21 @@ function isValidMessage(msg) {
       console.log('無効なメッセージ: オブジェクトではありません')
       return false
     }
-    
-    if (msg.type === 'load') {
+    if (msg.type === 'load' || msg.type === 'loadSettings') {
       return true
     }
-    
     if (msg.type === 'save') {
       if (typeof msg.data !== 'string') {
         console.log('無効な保存メッセージ: データが暗号化文字列ではありません')
         return false
       }
-      
       return true
     }
-    
-    console.log('無効なメッセージ: 不明なタイプ', msg.type)
+    if (msg.type === 'saveSettings') {
+      if (!msg.data || typeof msg.data !== 'object') return false
+      // Optionally validate publicColumns
+      return true
+    }
     return false
   } catch (err) {
     console.error('メッセージ検証エラー:', err, msg)
@@ -104,14 +104,16 @@ function isValidMessage(msg) {
 const server = http.createServer()
 const wss = new WebSocketServer({ server, path: '/rollcall-ws' })
 
+// ---
 wss.on('connection', (ws, request) => {
   const clientId = getClientId(ws, request)
   console.log(`クライアント接続: ${clientId}`)
-  
-  // send initial payload
+
+  // send initial payloads
   try {
     const data = readData()
     ws.send(JSON.stringify({ type: 'attendees', data: data.attendees || [] }))
+    ws.send(JSON.stringify({ type: 'publicSettings', data: data.publicSettings || { showList: true, publicColumns: { employeeId: true, name: true, kana: true, group: true, nationality: true, attending: true } } }))
   } catch (err) {
     console.error('初期データ送信エラー:', err)
     ws.close(1011, 'サーバーエラー')
@@ -146,27 +148,32 @@ wss.on('connection', (ws, request) => {
       }
       
       if (msg.type === 'save') {
-        // save to file
-        writeData({ attendees: msg.data })
-        console.log(`クライアントがデータを保存: ${clientId}, ${msg.data.length}名の出席者`)
-        
-        // broadcast to all clients
+        // save attendees
+        const data = readData()
+        data.attendees = msg.data
+        writeData(data)
         const payload = JSON.stringify({ type: 'attendees', data: msg.data })
-        let broadcastCount = 0
         wss.clients.forEach(client => {
-          if (client.readyState === 1 /* OPEN */) {
-            client.send(payload)
-            broadcastCount++
-          }
+          if (client.readyState === 1) client.send(payload)
         })
-        console.log(`${broadcastCount}個のクライアントにブロードキャスト`)
       }
-      
       if (msg.type === 'load') {
-        // send current data to requesting client
         const data = readData()
         ws.send(JSON.stringify({ type: 'attendees', data: data.attendees || '' }))
-        console.log(`クライアントにデータを送信: ${clientId}`)
+      }
+      if (msg.type === 'saveSettings') {
+        // save and broadcast settings
+        const data = readData()
+        data.publicSettings = { ...data.publicSettings, ...msg.data }
+        writeData(data)
+        const payload = JSON.stringify({ type: 'publicSettings', data: data.publicSettings })
+        wss.clients.forEach(client => {
+          if (client.readyState === 1) client.send(payload)
+        })
+      }
+      if (msg.type === 'loadSettings') {
+        const data = readData()
+        ws.send(JSON.stringify({ type: 'publicSettings', data: data.publicSettings || { showList: true, publicColumns: { employeeId: true, name: true, kana: true, group: true, nationality: true, attending: true } } }))
       }
     } catch (err) {
       console.error(`WebSocket message error from ${clientId}:`, err.message)

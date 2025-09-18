@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { loadAttendees, saveAttendees } from '../utils/storage'
+import { loadAttendees, saveAttendees, defaultSettings } from '../utils/storage'
 import * as XLSX from 'xlsx'
 import ExcelJS from 'exceljs'
 
-export default function Admin() {
+const Admin: React.FC = () => {
   const [attendees, setAttendees] = useState([])
+  const [publicColumns, setPublicColumns] = useState(defaultSettings.publicColumns)
   const [name, setName] = useState('')
   const [employeeId, setEmployeeId] = useState('')
   const [kana, setKana] = useState('')
@@ -19,8 +20,32 @@ export default function Admin() {
       if (!mounted) return
       setAttendees(items)
     })()
-    return () => { mounted = false }
+    // WebSocket for settings
+    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:4000/rollcall-ws'
+    const ws = new WebSocket(wsUrl)
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: 'loadSettings' }))
+    }
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data)
+        if (msg && msg.type === 'publicSettings' && typeof msg.data === 'object') {
+          if (msg.data.publicColumns && typeof msg.data.publicColumns === 'object') setPublicColumns(msg.data.publicColumns)
+        }
+      } catch {}
+    }
+    return () => { mounted = false; ws.close() }
   }, [])
+  function handleColumnToggle(key: string, checked: boolean) {
+    const newCols = { ...publicColumns, [key]: checked }
+    setPublicColumns(newCols)
+    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:4000/rollcall-ws'
+    const ws = new WebSocket(wsUrl)
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: 'saveSettings', data: { publicColumns: newCols } }))
+      ws.close()
+    }
+  }
 
   async function persist(items) {
     setAttendees(items)
@@ -95,7 +120,28 @@ export default function Admin() {
         <p className="text-gray-600">出席者管理と参加状況追跡</p>
       </div>
 
-      {/* simple stats summary */}
+      {/* 公開カラム設定 */}
+      <div className="bg-white rounded-lg p-4 shadow-sm border flex flex-wrap items-center gap-4">
+        <span className="text-gray-800 font-medium mr-2">公開画面に表示するカラム:</span>
+        {[
+          { key: 'employeeId', label: '社員番号' },
+          { key: 'name', label: '氏名' },
+          { key: 'kana', label: '読み仮名' },
+          { key: 'group', label: '所属部署' },
+          { key: 'nationality', label: '国籍' },
+          { key: 'attending', label: '出欠状況' },
+        ].map(col => (
+          <label key={col.key} className="flex items-center gap-1 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!!publicColumns[col.key]}
+              onChange={e => handleColumnToggle(col.key, e.target.checked)}
+              className="form-checkbox h-4 w-4 text-blue-600"
+            />
+            <span className="text-xs text-gray-700">{col.label}</span>
+          </label>
+        ))}
+      </div>
       <div className="text-sm text-gray-900 space-y-1">
         <div>
           <span className="text-gray-600">総数</span> = <span className="font-semibold">{total}</span>
@@ -420,3 +466,5 @@ export default function Admin() {
     </div>
   )
 }
+
+export default Admin

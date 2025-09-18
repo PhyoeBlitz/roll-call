@@ -1,3 +1,13 @@
 {
-  "attendees": []
+  "attendees": "U2FsdGVkX1/bfxaKipMvLUBm1CWqLj7ceChKA9cFsXj8yX+zr/POS63ETNrBIOFwKbs0ld49JdSMYYHzCxuQffD05+FYHmdT927mohKlObU=",
+  "publicSettings": {
+    "publicColumns": {
+      "employeeId": true,
+      "name": true,
+      "kana": true,
+      "group": false,
+      "nationality": true,
+      "attending": true
+    }
+  }
 }

@@ -1,42 +1,59 @@
 import React, { useEffect, useState } from 'react'
-import { loadAttendees, subscribeAttendees } from '../utils/storage'
+import { loadAttendees, subscribeAttendees, defaultSettings } from '../utils/storage'
 
-export default function Public() {
+const Public: React.FC = () => {
     const [attendees, setAttendees] = useState(null)
+    const [publicColumns, setPublicColumns] = useState(defaultSettings.publicColumns)
 
-            useEffect(() => {
-                let mounted = true
+    useEffect(() => {
+        let mounted = true
 
-                // initial load (fallback if ws is slow)
-                ;(async () => {
-                    try {
-                        const items = await loadAttendees()
-                        if (mounted) setAttendees(items)
-                    } catch {}
-                })()
+        // initial load (fallback if ws is slow)
+        ;(async () => {
+            try {
+                const items = await loadAttendees()
+                if (mounted) setAttendees(items)
+            } catch {}
+        })()
 
-                // live updates via WebSocket
-                const unsub = subscribeAttendees(items => {
-                    if (mounted) setAttendees(items)
-                })
+        // live updates via WebSocket
+        const unsub = subscribeAttendees(items => {
+            if (mounted) setAttendees(items)
+        })
 
-                // also react to localStorage changes (same-device edits)
-                const onStorage = (e: StorageEvent) => {
-                    if (e.key === 'rollcall.attendees') {
-                        try {
-                            const raw = e.newValue
-                            if (raw) setAttendees(JSON.parse(raw))
-                        } catch {}
-                    }
+        // settings WebSocket
+        const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:4000/rollcall-ws'
+        const ws = new WebSocket(wsUrl)
+        ws.onopen = () => {
+            ws.send(JSON.stringify({ type: 'loadSettings' }))
+        }
+        ws.onmessage = (ev) => {
+            try {
+                const msg = JSON.parse(ev.data)
+                if (msg && msg.type === 'publicSettings' && typeof msg.data === 'object') {
+                    if (msg.data.publicColumns && typeof msg.data.publicColumns === 'object') setPublicColumns(msg.data.publicColumns)
                 }
-                window.addEventListener('storage', onStorage)
+            } catch {}
+        }
 
-                return () => {
-                    mounted = false
-                    unsub()
-                    window.removeEventListener('storage', onStorage)
-                }
-            }, [])
+        // also react to localStorage changes (same-device edits)
+        const onStorage = (e: StorageEvent) => {
+            if (e.key === 'rollcall.attendees') {
+                try {
+                    const raw = e.newValue
+                    if (raw) setAttendees(JSON.parse(raw))
+                } catch {}
+            }
+        }
+        window.addEventListener('storage', onStorage)
+
+        return () => {
+            mounted = false
+            unsub()
+            ws.close()
+            window.removeEventListener('storage', onStorage)
+        }
+    }, [])
 
     if (!attendees) return <div className="p-4"><h2 className="text-lg font-semibold">出席状況</h2><p>読み込み中...</p></div>
 
@@ -79,69 +96,59 @@ export default function Public() {
                 </div>
             </div>
 
-            {/* <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900">出席者一覧</h3>
-                </div>
-                <div className="overflow-auto max-h-96">
-                    <table className="min-w-full">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">社員番号</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">氏名</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">読み仮名</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">所属部署</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">国籍</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">出欠状況</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {attendees.map((a) => (
-                                <tr
-                                    key={a.employeeId}
-                                    className={`hover:bg-gray-50 ${a.attending ? 'bg-green-50' : 'bg-white'}`}
-                                >
-                                    <td className="px-4 py-3 text-sm text-gray-900">{a.employeeId || '—'}</td>
-                                    <td className="px-4 py-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-8 h-8 rounded-full ${a.attending ? 'bg-green-600' : 'bg-gray-400'} text-white flex items-center justify-center text-xs font-bold`}>
-                                                {a.name ? a.name.charAt(0).toUpperCase() : '?'}
-                                            </div>
-                                            <span className="text-sm font-medium text-gray-900">{a.name}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-3 text-sm text-gray-600">{a.kana || '—'}</td>
-                                    <td className="px-4 py-3 text-sm">
-                                        {a.group ? (
-                                            <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                                                {a.group}
-                                            </span>
-                                        ) : '—'}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm">
-                                        {a.nationality ? (
-                                            <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">
-                                                {a.nationality}
-                                            </span>
-                                        ) : '—'}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        {a.attending ? (
-                                            <span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
-                                                ✅ 出席
-                                            </span>
-                                        ) : (
-                                            <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded">
-                                                ❌ 欠席
-                                            </span>
-                                        )}
-                                    </td>
+            {publicColumns && Object.values(publicColumns).some(Boolean) && (
+                <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-200">
+                        <h3 className="text-lg font-semibold text-gray-900">出席者一覧</h3>
+                    </div>
+                    <div className="overflow-auto max-h-96">
+                        <table className="min-w-full">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    {publicColumns.employeeId && <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">社員番号</th>}
+                                    {publicColumns.name && <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">氏名</th>}
+                                    {publicColumns.kana && <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">読み仮名</th>}
+                                    {publicColumns.group && <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">所属部署</th>}
+                                    {publicColumns.nationality && <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">国籍</th>}
+                                    {publicColumns.attending && <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">出欠状況</th>}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                                {attendees.map((a) => (
+                                    <tr
+                                        key={a.employeeId}
+                                        className={`hover:bg-gray-50 ${a.attending ? 'bg-green-50' : 'bg-white'}`}
+                                    >
+                                        {publicColumns.employeeId && <td className="px-4 py-3 text-sm text-gray-900">{a.employeeId || '—'}</td>}
+                                        {publicColumns.name && <td className="px-4 py-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-full ${a.attending ? 'bg-green-600' : 'bg-gray-400'} text-white flex items-center justify-center text-xs font-bold`}>
+                                                    {a.name ? a.name.charAt(0).toUpperCase() : '?'}
+                                                </div>
+                                                <span className="text-sm font-medium text-gray-900">{a.name}</span>
+                                            </div>
+                                        </td>}
+                                        {publicColumns.kana && <td className="px-4 py-3 text-sm text-gray-600">{a.kana || '—'}</td>}
+                                        {publicColumns.group && <td className="px-4 py-3 text-sm">{a.group ? (
+                                            <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">{a.group}</span>
+                                        ) : '—'}</td>}
+                                        {publicColumns.nationality && <td className="px-4 py-3 text-sm">{a.nationality ? (
+                                            <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded">{a.nationality}</span>
+                                        ) : '—'}</td>}
+                                        {publicColumns.attending && <td className="px-4 py-3">{a.attending ? (
+                                            <span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">✅ 出席</span>
+                                        ) : (
+                                            <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded">❌ 欠席</span>
+                                        )}</td>}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div> */}
+            )}
         </div>
     )
 }
+
+export default Public

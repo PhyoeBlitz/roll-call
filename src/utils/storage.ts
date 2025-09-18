@@ -49,6 +49,33 @@ export type Attendee = {
   checkedAt?: string // ISO timestamp when marked attending
 }
 
+// Public page column visibility settings
+export type PublicColumns = {
+  employeeId?: boolean
+  name?: boolean
+  kana?: boolean
+  group?: boolean
+  nationality?: boolean
+  attending?: boolean
+}
+
+export type PublicSettings = {
+  showList: boolean
+  publicColumns: PublicColumns
+}
+
+export const defaultSettings: PublicSettings = {
+  showList: true,
+  publicColumns: {
+    employeeId: true,
+    name: true,
+    kana: true,
+    group: true,
+    nationality: true,
+    attending: true,
+  }
+}
+
 // WebSocket-based data operations
 let wsConnection: WebSocket | null = null
 let wsReady = false
