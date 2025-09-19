@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { loadAttendees, saveAttendees, defaultSettings } from '../utils/storage'
+import { loadAttendees, saveAttendees, defaultSettings,encryptData,decryptData } from '../utils/storage'
 import * as XLSX from 'xlsx'
 import ExcelJS from 'exceljs'
 
@@ -32,8 +32,11 @@ const Admin: React.FC = () => {
     ws.onmessage = (ev) => {
       try {
         const msg = JSON.parse(ev.data)
-        if (msg && msg.type === 'publicSettings' && typeof msg.data === 'object') {
-          if (msg.data.publicColumns && typeof msg.data.publicColumns === 'object') setPublicColumns(msg.data.publicColumns)
+        if (msg && msg.type === 'publicSettings' && typeof msg.data === 'string') {
+          const decryptedSettings = decryptData(msg.data)
+          if (decryptedSettings.publicColumns && typeof decryptedSettings.publicColumns === 'object') {
+            setPublicColumns(decryptedSettings.publicColumns)
+          }
         }
       } catch { }
     }
@@ -43,7 +46,7 @@ const Admin: React.FC = () => {
     const newCols = { ...publicColumns, [key]: checked }
     setPublicColumns(newCols)
     if (settingsWs && settingsWs.readyState === WebSocket.OPEN) {
-      settingsWs.send(JSON.stringify({ type: 'saveSettings', data: { publicColumns: newCols } }))
+      settingsWs.send(JSON.stringify({ type: 'saveSettings', data: encryptData({ publicColumns: newCols }) }))
     }
   }
 

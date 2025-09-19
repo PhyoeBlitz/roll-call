@@ -16,7 +16,7 @@ function readData() {
     const raw = fs.readFileSync(DATA_FILE, 'utf8')
     return JSON.parse(raw)
   } catch {
-    return { attendees: '', publicSettings: { showList: true, publicColumns: { employeeId: true, name: true, kana: true, group: true, nationality: true, attending: true } } }
+    return { attendees: '', publicSettings: '' }
   }
 }
 
@@ -64,8 +64,10 @@ function isValidMessage(msg) {
       return true
     }
     if (msg.type === 'saveSettings') {
-      if (!msg.data || typeof msg.data !== 'object') return false
-      // Optionally validate publicColumns
+      if (typeof msg.data !== 'string') {
+        console.log('無効な設定保存メッセージ: データが暗号化文字列ではありません')
+        return false
+      }
       return true
     }
     return false
@@ -90,7 +92,7 @@ wss.on('connection', (ws, request) => {
   try {
     const data = readData()
     ws.send(JSON.stringify({ type: 'attendees', data: data.attendees || [] }))
-    ws.send(JSON.stringify({ type: 'publicSettings', data: data.publicSettings || { showList: true, publicColumns: { employeeId: true, name: true, kana: true, group: true, nationality: true, attending: true } } }))
+    ws.send(JSON.stringify({ type: 'publicSettings', data: data.publicSettings || '' }))
   } catch (err) {
     console.error('初期データ送信エラー:', err)
     ws.close(1011, 'サーバーエラー')
@@ -139,18 +141,18 @@ wss.on('connection', (ws, request) => {
         ws.send(JSON.stringify({ type: 'attendees', data: data.attendees || '' }))
       }
       if (msg.type === 'saveSettings') {
-        // save and broadcast settings
+        // save and broadcast settings (encrypted)
         const data = readData()
-        data.publicSettings = { ...data.publicSettings, ...msg.data }
+        data.publicSettings = msg.data  // ← Store encrypted string directly
         writeData(data)
-        const payload = JSON.stringify({ type: 'publicSettings', data: data.publicSettings })
+        const payload = JSON.stringify({ type: 'publicSettings', data: msg.data })
         wss.clients.forEach(client => {
           if (client.readyState === 1) client.send(payload)
         })
       }
       if (msg.type === 'loadSettings') {
         const data = readData()
-        ws.send(JSON.stringify({ type: 'publicSettings', data: data.publicSettings || { showList: true, publicColumns: { employeeId: true, name: true, kana: true, group: true, nationality: true, attending: true } } }))
+        ws.send(JSON.stringify({ type: 'publicSettings', data: data.publicSettings || '' }))
       }
     } catch (err) {
       console.error(`WebSocket message error from ${clientId}:`, err.message)

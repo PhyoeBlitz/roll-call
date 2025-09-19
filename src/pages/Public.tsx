@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { loadAttendees, subscribeAttendees, defaultSettings } from '../utils/storage'
+import { loadAttendees, subscribeAttendees, defaultSettings,decryptData } from '../utils/storage'
 
 const Public: React.FC = () => {
     const [attendees, setAttendees] = useState(null)
@@ -30,8 +30,9 @@ const Public: React.FC = () => {
         ws.onmessage = (ev) => {
             try {
                 const msg = JSON.parse(ev.data)
-                if (msg && msg.type === 'publicSettings' && typeof msg.data === 'object') {
-                    if (msg.data.publicColumns && typeof msg.data.publicColumns === 'object') setPublicColumns(msg.data.publicColumns)
+                if (msg && msg.type === 'publicSettings' && typeof msg.data === 'string') {
+                    const decryptedSettings = decryptData(msg.data);
+                    setPublicColumns(decryptedSettings)
                 }
             } catch {}
         }

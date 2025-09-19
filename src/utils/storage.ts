@@ -26,11 +26,11 @@ function restoreAttendees(minified: any[]): Attendee[] {
   }));
 }
 
-function encryptData(data: any): string {
+export function encryptData(data: any): string {
   return CryptoJS.AES.encrypt(JSON.stringify(data), SECRET_KEY).toString();
 }
 
-function decryptData(ciphertext: string): any {
+export function decryptData(ciphertext: string): any {
   const bytes = CryptoJS.AES.decrypt(ciphertext, SECRET_KEY);
   const decrypted = bytes.toString(CryptoJS.enc.Utf8);
   return JSON.parse(decrypted);
