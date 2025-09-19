@@ -32,7 +32,9 @@ const Public: React.FC = () => {
                 const msg = JSON.parse(ev.data)
                 if (msg && msg.type === 'publicSettings' && typeof msg.data === 'string') {
                     const decryptedSettings = decryptData(msg.data);
-                    setPublicColumns(decryptedSettings)
+                    if (decryptedSettings && decryptedSettings.publicColumns) {
+                        setPublicColumns(decryptedSettings.publicColumns)
+                    }
                 }
             } catch {}
         }
