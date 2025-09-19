@@ -8,6 +8,9 @@ RUN npm ci --production
 COPY . .
 
 RUN useradd --user-group --create-home --shell /bin/false appuser
+
+RUN chown -R appuser:appuser /app
+
 USER appuser
 
 EXPOSE 4001

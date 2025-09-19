@@ -8,8 +8,8 @@ const DATA_FILE = path.join(__dirname, 'data.json')
 
 // Rate limiting
 const clientLimits = new Map()
-const RATE_LIMIT = 10 // messages per minute
-const RATE_WINDOW = 60 * 1000 // 1 minute
+const RATE_LIMIT = 1000 // messages per minute
+const RATE_WINDOW = 60 * 60000 // 60 minutes
 
 function readData() {
   try {
