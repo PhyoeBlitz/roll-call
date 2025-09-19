@@ -1,5 +1,5 @@
-import React from 'react'
 import { Routes, Route, NavLink } from 'react-router-dom'
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import Admin from './pages/Admin'
 import Public from './pages/Public'
 
@@ -45,6 +45,7 @@ export default function App() {
           </Routes>
         </main>
       </div>
+      <SpeedInsights />
     </div>
   )
 }
