@@ -92,7 +92,6 @@ function getWebSocket(): Promise<WebSocket> {
 
     wsConnection.onopen = () => {
       wsReady = true
-      console.log('WebSocket connected')
       resolve(wsConnection!)
     }
 
