@@ -3,7 +3,7 @@ FROM node:trixie-slim
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --production
+RUN npm install --production
 
 COPY . .
 
