@@ -13,6 +13,7 @@ const Admin: React.FC = () => {
   const [nationality, setNationality] = useState('')
   const [search, setSearch] = useState('')
   const [settingsWs, setSettingsWs] = useState<WebSocket | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -379,8 +380,19 @@ const Admin: React.FC = () => {
 
       <div className="flex items-center justify-between mb-2">
         <div className="text-sm text-gray-600 bg-white px-4 py-2 rounded-lg shadow-sm">
-          <span className="font-semibold">{attendees.length}</span>名中<span className="font-semibold text-indigo-600">{filteredAttendees.length}</span>名を表示
+          <span className="font-semibold">{attendees.length}</span>名中
+          <span className="font-semibold text-indigo-600">{filteredAttendees.length}</span>名を表示
         </div>
+        <button
+          className="px-4 py-2 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 transition-colors"
+          onClick={
+            () => {
+              setShowDeleteModal(true)
+            }
+          }
+        >
+          一括削除
+        </button>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
@@ -439,8 +451,8 @@ const Admin: React.FC = () => {
                       <div className="flex flex-wrap items-center gap-2">
                         <button
                           className={`inline-flex items-center justify-center px-4 py-2 rounded-md border text-sm font-medium transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${a.attending
-                              ? 'border-orange-300 text-orange-700 hover:bg-orange-50'
-                              : 'border-green-300 text-green-700 hover:bg-green-50'
+                            ? 'border-orange-300 text-orange-700 hover:bg-orange-50'
+                            : 'border-green-300 text-green-700 hover:bg-green-50'
                             }`}
                           onClick={() => toggle(a.employeeId)}
                         >
@@ -461,6 +473,35 @@ const Admin: React.FC = () => {
           </div>
         )}
       </div>
+      {/* Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
+            <div className="text-lg font-semibold mb-4">確認</div>
+            <div className="mb-6 text-gray-700">
+              本当に全ての出席者を削除しますか？<br />
+              この操作は元に戻せません。
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
+                onClick={() => setShowDeleteModal(false)}
+              >
+                キャンセル
+              </button>
+              <button
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+                onClick={async () => {
+                  await persist([])
+                  setShowDeleteModal(false)
+                }}
+              >
+                削除する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
