@@ -12,17 +12,19 @@ const Admin: React.FC = () => {
   const [group, setGroup] = useState('')
   const [nationality, setNationality] = useState('')
   const [search, setSearch] = useState('')
+  const [settingsWs, setSettingsWs] = useState<WebSocket | null>(null);
 
   useEffect(() => {
     let mounted = true
-    ;(async () => {
-      const items = await loadAttendees()
-      if (!mounted) return
-      setAttendees(items)
-    })()
+      ; (async () => {
+        const items = await loadAttendees()
+        if (!mounted) return
+        setAttendees(items)
+      })()
     // WebSocket for settings
     const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:4000/rollcall-ws'
     const ws = new WebSocket(wsUrl)
+    setSettingsWs(ws)
     ws.onopen = () => {
       ws.send(JSON.stringify({ type: 'loadSettings' }))
     }
@@ -32,18 +34,15 @@ const Admin: React.FC = () => {
         if (msg && msg.type === 'publicSettings' && typeof msg.data === 'object') {
           if (msg.data.publicColumns && typeof msg.data.publicColumns === 'object') setPublicColumns(msg.data.publicColumns)
         }
-      } catch {}
+      } catch { }
     }
     return () => { mounted = false; ws.close() }
   }, [])
   function handleColumnToggle(key: string, checked: boolean) {
     const newCols = { ...publicColumns, [key]: checked }
     setPublicColumns(newCols)
-    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:4000/rollcall-ws'
-    const ws = new WebSocket(wsUrl)
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ type: 'saveSettings', data: { publicColumns: newCols } }))
-      ws.close()
+    if (settingsWs && settingsWs.readyState === WebSocket.OPEN) {
+      settingsWs.send(JSON.stringify({ type: 'saveSettings', data: { publicColumns: newCols } }))
     }
   }
 
@@ -160,38 +159,38 @@ const Admin: React.FC = () => {
       <div className="bg-white rounded-lg p-6 shadow-sm border">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">新規出席者追加</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <input 
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-            value={employeeId} 
-            onChange={e => setEmployeeId(e.target.value)} 
-            placeholder="社員番号" 
+          <input
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            value={employeeId}
+            onChange={e => setEmployeeId(e.target.value)}
+            placeholder="社員番号"
           />
-          <input 
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-            value={name} 
-            onChange={e => setName(e.target.value)} 
-            placeholder="氏名" 
+          <input
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            placeholder="氏名"
           />
-          <input 
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-            value={kana} 
-            onChange={e => setKana(e.target.value)} 
-            placeholder="読み仮名" 
+          <input
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            value={kana}
+            onChange={e => setKana(e.target.value)}
+            placeholder="読み仮名"
           />
-          <input 
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-            value={group} 
-            onChange={e => setGroup(e.target.value)} 
-            placeholder="所属部署" 
+          <input
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            value={group}
+            onChange={e => setGroup(e.target.value)}
+            placeholder="所属部署"
           />
-          <input 
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-            value={nationality} 
-            onChange={e => setNationality(e.target.value)} 
-            placeholder="国籍" 
+          <input
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            value={nationality}
+            onChange={e => setNationality(e.target.value)}
+            placeholder="国籍"
           />
-          <button 
-            className="px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-colors" 
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-colors"
             onClick={add}
           >
             人員追加
@@ -203,33 +202,33 @@ const Admin: React.FC = () => {
         <h3 className="text-lg font-semibold text-gray-800 mb-4">データエクスポート</h3>
         <div className="flex flex-wrap gap-3">
           <button className="px-4 py-2 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 transition-colors" onClick={async () => {
-          const wb = new ExcelJS.Workbook()
-          const sheet = wb.addWorksheet('attendees')
-          sheet.columns = [
-            { header: '社員番号', key: 'employeeId', width: 15 },
-            { header: '氏名', key: 'name', width: 20 },
-            { header: '読み仮名', key: 'kana', width: 20 },
-            { header: '所属グループ', key: 'group', width: 20 },
-            { header: '国籍', key: 'nationality', width: 12 },
-            { header: '出欠', key: 'attending', width: 10 },
-            { header: 'チェック時刻', key: 'checkedAt', width: 20 }
-          ]
+            const wb = new ExcelJS.Workbook()
+            const sheet = wb.addWorksheet('attendees')
+            sheet.columns = [
+              { header: '社員番号', key: 'employeeId', width: 15 },
+              { header: '氏名', key: 'name', width: 20 },
+              { header: '読み仮名', key: 'kana', width: 20 },
+              { header: '所属グループ', key: 'group', width: 20 },
+              { header: '国籍', key: 'nationality', width: 12 },
+              { header: '出欠', key: 'attending', width: 10 },
+              { header: 'チェック時刻', key: 'checkedAt', width: 20 }
+            ]
 
-          // header styling: light green fill and border
-          sheet.getRow(1).eachCell((cell) => {
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCCFFCC' } }
-            cell.border = {
-              top: { style: 'thin' },
-              left: { style: 'thin' },
-              bottom: { style: 'thin' },
-              right: { style: 'thin' }
-            }
-            cell.font = { bold: true }
-          })
+            // header styling: light green fill and border
+            sheet.getRow(1).eachCell((cell) => {
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFCCFFCC' } }
+              cell.border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+              }
+              cell.font = { bold: true }
+            })
 
-          attendees.forEach(a => {
-            const checkedAtFormatted = a.checkedAt 
-              ? new Date(a.checkedAt).toLocaleString('ja-JP', {
+            attendees.forEach(a => {
+              const checkedAtFormatted = a.checkedAt
+                ? new Date(a.checkedAt).toLocaleString('ja-JP', {
                   year: 'numeric',
                   month: '2-digit',
                   day: '2-digit',
@@ -237,71 +236,71 @@ const Admin: React.FC = () => {
                   minute: '2-digit',
                   second: '2-digit'
                 })
-              : ''
-            
-            sheet.addRow({
-              employeeId: a.employeeId || '',
-              name: a.name,
-              kana: a.kana || '',
-              group: a.group || '',
-              nationality: a.nationality || '',
-              attending: a.attending ? '出席' : '欠席',
-              checkedAt: checkedAtFormatted
+                : ''
+
+              sheet.addRow({
+                employeeId: a.employeeId || '',
+                name: a.name,
+                kana: a.kana || '',
+                group: a.group || '',
+                nationality: a.nationality || '',
+                attending: a.attending ? '出席' : '欠席',
+                checkedAt: checkedAtFormatted
+              })
             })
-          })
 
-          // Add summary rows
-          const attendingCount = attendees.filter(a => a.attending).length
-          const notAttendingCount = attendees.filter(a => !a.attending).length
-          
-          // Empty row for spacing
-          sheet.addRow({})
-          
-          // Summary rows
-          const totalAttendingRow = sheet.addRow({
-            employeeId: '',
-            name: '合計出席者',
-            kana: '',
-            group: '',
-            nationality: '',
-            attending: attendingCount.toString(),
-            checkedAt: ''
-          })
-          
-          const totalNotAttendingRow = sheet.addRow({
-            employeeId: '',
-            name: '合計欠席者',
-            kana: '',
-            group: '',
-            nationality: '',
-            attending: notAttendingCount.toString(),
-            checkedAt: ''
-          })
+            // Add summary rows
+            const attendingCount = attendees.filter(a => a.attending).length
+            const notAttendingCount = attendees.filter(a => !a.attending).length
 
-          // Style summary rows
-          totalAttendingRow.eachCell((cell) => {
-            cell.font = { bold: true }
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6F3E6' } }
-          })
-          
-          totalNotAttendingRow.eachCell((cell) => {
-            cell.font = { bold: true }
-            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE6E6' } }
-          })
+            // Empty row for spacing
+            sheet.addRow({})
 
-          const buf = await wb.xlsx.writeBuffer()
-          const blob = new Blob([buf], { type: 'application/octet-stream' })
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = 'attendees.xlsx'
-          document.body.appendChild(a)
-          a.click()
-          a.remove()
-          URL.revokeObjectURL(url)
-        }}>
-          Excelエクスポート
-        </button>
+            // Summary rows
+            const totalAttendingRow = sheet.addRow({
+              employeeId: '',
+              name: '合計出席者',
+              kana: '',
+              group: '',
+              nationality: '',
+              attending: attendingCount.toString(),
+              checkedAt: ''
+            })
+
+            const totalNotAttendingRow = sheet.addRow({
+              employeeId: '',
+              name: '合計欠席者',
+              kana: '',
+              group: '',
+              nationality: '',
+              attending: notAttendingCount.toString(),
+              checkedAt: ''
+            })
+
+            // Style summary rows
+            totalAttendingRow.eachCell((cell) => {
+              cell.font = { bold: true }
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6F3E6' } }
+            })
+
+            totalNotAttendingRow.eachCell((cell) => {
+              cell.font = { bold: true }
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE6E6' } }
+            })
+
+            const buf = await wb.xlsx.writeBuffer()
+            const blob = new Blob([buf], { type: 'application/octet-stream' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = 'attendees.xlsx'
+            document.body.appendChild(a)
+            a.click()
+            a.remove()
+            URL.revokeObjectURL(url)
+          }}>
+            Excelエクスポート
+          </button>
         </div>
       </div>
 
@@ -326,56 +325,56 @@ const Admin: React.FC = () => {
       <div className="bg-white rounded-lg p-6 shadow-sm border">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">ファイルアップロード</h3>
         <label className="block mb-3 text-sm text-gray-600">社員番号、氏名、読み仮名、部署、国籍の列を含むExcelファイルをアップロード</label>
-        <input 
-          className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" 
-          type="file" 
-          accept=".xlsx,.xls,.csv" 
+        <input
+          className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          type="file"
+          accept=".xlsx,.xls,.csv"
           onChange={async e => {
-          const f = e.target.files && e.target.files[0]
-          if (!f) return
-          const buf = await f.arrayBuffer()
-          const wb = XLSX.read(buf, {type:'array'})
-          const sheet = wb.Sheets[wb.SheetNames[0]]
-          const rows = XLSX.utils.sheet_to_json(sheet, {defval: ''})
-          // Map rows to attendees
-          const parsed = rows.map(r => ({
-            employeeId: String(r['社員番号'] || r['employeeId'] || r['Employee ID'] || '').trim(),
-            name: String(r['氏名'] || r['name'] || r['Name'] || '').trim(),
-            kana: String(r['読み仮名'] || r['kana'] || '').trim(),
-            group: String(r['所属グループ'] || r['group'] || '').trim(),
-            nationality: String(r['国籍'] || r['nationality'] || '').trim(),
-            attending: !!r['出欠'] ? (String(r['出欠']).includes('出') || String(r['出欠']).includes('✅') || String(r['出欠']).toLowerCase().includes('true')) : false
-          }))
+            const f = e.target.files && e.target.files[0]
+            if (!f) return
+            const buf = await f.arrayBuffer()
+            const wb = XLSX.read(buf, { type: 'array' })
+            const sheet = wb.Sheets[wb.SheetNames[0]]
+            const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' })
+            // Map rows to attendees
+            const parsed = rows.map(r => ({
+              employeeId: String(r['社員番号'] || r['employeeId'] || r['Employee ID'] || '').trim(),
+              name: String(r['氏名'] || r['name'] || r['Name'] || '').trim(),
+              kana: String(r['読み仮名'] || r['kana'] || '').trim(),
+              group: String(r['所属グループ'] || r['group'] || '').trim(),
+              nationality: String(r['国籍'] || r['nationality'] || '').trim(),
+              attending: !!r['出欠'] ? (String(r['出欠']).includes('出') || String(r['出欠']).includes('✅') || String(r['出欠']).toLowerCase().includes('true')) : false
+            }))
 
-          // Deduplicate: skip rows whose employeeId already exists. Generate a surrogate if employeeId is empty.
-          const existing = new Set(attendees.map(a => a.employeeId))
-          const toAdd = []
-          let skipped = 0
-          for (const p of parsed) {
-            let eidRow = p.employeeId || ''
-            if (!eidRow) {
-              // generate a stable-ish surrogate
-              eidRow = `GEN-${Date.now()}-${Math.random().toString(36).slice(2,5)}`
+            // Deduplicate: skip rows whose employeeId already exists. Generate a surrogate if employeeId is empty.
+            const existing = new Set(attendees.map(a => a.employeeId))
+            const toAdd = []
+            let skipped = 0
+            for (const p of parsed) {
+              let eidRow = p.employeeId || ''
+              if (!eidRow) {
+                // generate a stable-ish surrogate
+                eidRow = `GEN-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`
+              }
+              // ensure uniqueness by regenerating if collision
+              while (existing.has(eidRow)) {
+                // if incoming row had an explicit employeeId and it's taken, skip it
+                if (p.employeeId) { eidRow = null; break }
+                eidRow = `GEN-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`
+              }
+              if (!eidRow) { skipped++; continue }
+              existing.add(eidRow)
+              toAdd.push({ employeeId: eidRow, name: p.name || '', kana: p.kana || undefined, group: p.group || undefined, nationality: p.nationality || undefined, attending: !!p.attending })
             }
-            // ensure uniqueness by regenerating if collision
-            while (existing.has(eidRow)) {
-              // if incoming row had an explicit employeeId and it's taken, skip it
-              if (p.employeeId) { eidRow = null; break }
-              eidRow = `GEN-${Date.now()}-${Math.random().toString(36).slice(2,5)}`
+
+            if (toAdd.length === 0) {
+              window.alert(`新しい行は追加されませんでした。${skipped ? `${skipped}件の重複がスキップされました。` : ''}`)
+              return
             }
-            if (!eidRow) { skipped++; continue }
-            existing.add(eidRow)
-            toAdd.push({ employeeId: eidRow, name: p.name || '', kana: p.kana || undefined, group: p.group || undefined, nationality: p.nationality || undefined, attending: !!p.attending })
-          }
 
-          if (toAdd.length === 0) {
-            window.alert(`新しい行は追加されませんでした。${skipped ? `${skipped}件の重複がスキップされました。` : ''}`)
-            return
-          }
-
-          await persist([...attendees, ...toAdd])
-          if (skipped) window.alert(`${toAdd.length}行が追加され、${skipped}件の重複がスキップされました。`)
-        }} />
+            await persist([...attendees, ...toAdd])
+            if (skipped) window.alert(`${toAdd.length}行が追加され、${skipped}件の重複がスキップされました。`)
+          }} />
       </div>
 
       <div className="flex items-center justify-between mb-2">
@@ -439,11 +438,10 @@ const Admin: React.FC = () => {
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <button
-                          className={`inline-flex items-center justify-center px-4 py-2 rounded-md border text-sm font-medium transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
-                            a.attending
+                          className={`inline-flex items-center justify-center px-4 py-2 rounded-md border text-sm font-medium transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${a.attending
                               ? 'border-orange-300 text-orange-700 hover:bg-orange-50'
                               : 'border-green-300 text-green-700 hover:bg-green-50'
-                          }`}
+                            }`}
                           onClick={() => toggle(a.employeeId)}
                         >
                           {a.attending ? '❌ 欠席にする' : '✅ 出席にする'}

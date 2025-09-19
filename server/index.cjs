@@ -47,29 +47,6 @@ function checkRateLimit(clientId) {
   return clientData.count <= RATE_LIMIT
 }
 
-function isValidAttendee(attendee) {
-  try {
-    return (
-      attendee &&
-      typeof attendee === 'object' &&
-      typeof attendee.employeeId === 'string' &&
-      typeof attendee.name === 'string' &&
-      typeof attendee.attending === 'boolean' &&
-      attendee.employeeId.length > 0 &&
-      attendee.name.length > 0 &&
-      attendee.employeeId.length <= 100 && // increased limit
-      attendee.name.length <= 200 && // increased limit
-      (attendee.kana === undefined || attendee.kana === null || typeof attendee.kana === 'string') &&
-      (attendee.group === undefined || attendee.group === null || typeof attendee.group === 'string') &&
-      (attendee.nationality === undefined || attendee.nationality === null || typeof attendee.nationality === 'string') &&
-      (attendee.checkedAt === undefined || attendee.checkedAt === null || typeof attendee.checkedAt === 'string')
-    )
-  } catch (err) {
-    console.error('出席者検証エラー:', err, attendee)
-    return false
-  }
-}
-
 function isValidMessage(msg) {
   try {
     if (!msg || typeof msg !== 'object') {
