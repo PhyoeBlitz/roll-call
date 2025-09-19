@@ -15,46 +15,15 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-import { Routes, Route, NavLink } from 'react-router-dom'
+import { Routes, Route} from 'react-router-dom'
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import Admin from './pages/Admin'
 import Public from './pages/Public'
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto p-6">
-        {/* <header className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-          </div>
-          <nav className="flex items-center gap-1 bg-white rounded-lg p-1 shadow-sm">
-            <NavLink 
-              to="/" 
-              className={({isActive}) => 
-                `px-4 py-2 rounded-md font-medium transition-colors ${
-                  isActive 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`
-              }
-            >
-              出席状況
-            </NavLink>
-            <NavLink 
-              to="/admin" 
-              className={({isActive}) => 
-                `px-4 py-2 rounded-md font-medium transition-colors ${
-                  isActive 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`
-              }
-            >
-              管理画面
-            </NavLink>
-          </nav>
-        </header> */}
-
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="max-w-6xl mx-auto p-6 flex-grow">
         <main className="bg-white rounded-xl shadow-sm p-8">
           <Routes>
             <Route path="/" element={<Public />} />
@@ -64,7 +33,7 @@ export default function App() {
       </div>
 
       {/* Footer with source code link */}
-      <footer className="bg-gray-100 border-t mt-8 py-4">
+      <footer className="bg-gray-100 border-t py-4 mt-auto">
         <div className="max-w-6xl mx-auto px-6 text-center text-sm text-gray-600">
           <a
             href="https://github.com/PhyoeBlitz/roll-call"
