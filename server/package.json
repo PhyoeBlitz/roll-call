@@ -1,6 +1,6 @@
 {
   "name": "roll-call-server",
-  "version": "1.0.0",
+  "version": "1.0.7",
   "main": "index.cjs",
   "type": "commonjs",
   "scripts": {
