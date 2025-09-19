@@ -17,6 +17,7 @@
  */
 import { Routes, Route} from 'react-router-dom'
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import { Analytics } from "@vercel/analytics/react"
 import Admin from './pages/Admin'
 import Public from './pages/Public'
 
@@ -46,6 +47,7 @@ export default function App() {
         </div>
       </footer>
 
+      <Analytics />
       <SpeedInsights />
     </div>
   )
