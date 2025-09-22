@@ -330,7 +330,8 @@ const Admin: React.FC = () => {
         <h3 className="text-lg font-semibold text-gray-800 mb-4">ファイルアップロード</h3>
         <label className="block mb-3 text-sm text-gray-600">社員番号、氏名、読み仮名、部署、国籍の列を含むExcelファイルをアップロード</label>
         <input
-          className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          className="hidden"
+          id="file-upload"
           type="file"
           accept=".xlsx,.xls,.csv"
           onChange={async e => {
@@ -378,7 +379,14 @@ const Admin: React.FC = () => {
 
             await persist([...attendees, ...toAdd])
             if (skipped) window.alert(`${toAdd.length}行が追加され、${skipped}件の重複がスキップされました。`)
+            e.target.value = ''
           }} />
+          <label
+          htmlFor="file-upload"
+          className="px-4 py-2 bg-blue-500 text-white rounded-md font-medium hover:bg-blue-700 cursor-pointer"
+        >
+          ファイルを選択
+        </label>
       </div>
 
       <div className="flex items-center justify-between mb-2">
