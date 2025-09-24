@@ -39,5 +39,6 @@ export default defineConfig({
       }
     },
     chunkSizeWarningLimit: 3000,
-  }
+  },
+  assetsInclude: ['**/*.wasm?module'],
 })
