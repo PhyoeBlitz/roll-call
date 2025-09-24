@@ -67,6 +67,11 @@ You can download or export a sample Excel file from the admin panel for referenc
 
 ## Deployment
 
+**Note:**  
+The provided Docker image and Dockerfile are **for the backend server only**.  
+The frontend (React app) should be built and deployed separately to a static hosting service (such as Firebase Hosting, Vercel, or Netlify).
+
+
 **Frontend** (Firebase Hosting example):
 ```bash
 npm run build
@@ -78,6 +83,13 @@ firebase deploy
 cd server
 docker build -t your-project/roll-call-server .
 gcloud run deploy --image your-project/roll-call-server
+```
+
+[![GHCR](https://img.shields.io/badge/GHCR-Available-brightgreen?logo=github)](https://github.com/phyoeblitz/roll-call/pkgs/container/roll-call-server)
+
+**Docker Pull:**
+```sh
+docker pull ghcr.io/phyoeblitz/roll-call/roll-call-server:latest
 ```
 
 ## License

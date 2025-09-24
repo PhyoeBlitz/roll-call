@@ -4,6 +4,19 @@
   "private": true,
   "type": "module",
   "license": "AGPL-3.0-or-later",
+  "keywords": [
+    "server",
+    "roll-call",
+    "attendance",
+    "websocket",
+    "vite",
+    "react",
+    "docker",
+    "ws",
+    "excel",
+    "xlsx",
+    "real-time"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
