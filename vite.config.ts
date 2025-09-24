@@ -29,6 +29,7 @@ export default defineConfig({
     banner(licenseBanner)
   ],
   build: {
+    manifest: true,
     rollupOptions: {
       output: {
         manualChunks: {
