@@ -1,4 +1,5 @@
 /*
+ * @license Roll Call
  * Roll Call - A secure, real-time attendance tracking system
  * Copyright (C) 2024 Phyoe
  *
