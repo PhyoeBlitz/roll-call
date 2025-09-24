@@ -33,9 +33,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor': ['react', 'react-dom', 'react-router-dom'],
-          'libs': ['crypto-js', 'exceljs', 'xlsx', '@vercel/speed-insights'],
-        }
+        'vendor': ['react', 'react-dom', 'react-router-dom'],
+        'excel': ['exceljs', 'xlsx'],
+        'crypto': ['crypto-js'],
+        'analytics': ['@vercel/speed-insights'],
+      }
       }
     },
     chunkSizeWarningLimit: 3000,

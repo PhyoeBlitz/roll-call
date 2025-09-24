@@ -16,10 +16,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-import { Routes, Route} from 'react-router-dom'
+import React, { Suspense } from 'react';
+import { Routes, Route } from 'react-router-dom'
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Analytics } from "@vercel/analytics/react"
-import Admin from './pages/Admin'
+const Admin = React.lazy(() => import('./pages/Admin'));
 import Public from './pages/Public'
 
 export default function App() {
@@ -27,10 +28,12 @@ export default function App() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <div className="max-w-6xl mx-auto p-6 flex-grow">
         <main className="bg-white rounded-xl shadow-sm p-8">
-          <Routes>
-            <Route path="/" element={<Public />} />
-            <Route path="/admin" element={<Admin />} />
-          </Routes>
+          <Suspense fallback={<div>Loading...</div>}>
+            <Routes>
+              <Route path="/" element={<Public />} />
+              <Route path="/admin" element={<Admin />} />
+            </Routes>
+          </Suspense>
         </main>
       </div>
 
