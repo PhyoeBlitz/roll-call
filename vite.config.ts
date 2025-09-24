@@ -36,7 +36,6 @@ export default defineConfig({
         'vendor': ['react', 'react-dom', 'react-router-dom'],
         'excel': ['exceljs', 'xlsx'],
         'crypto': ['crypto-js'],
-        'analytics': ['@vercel/speed-insights'],
       }
       }
     },
